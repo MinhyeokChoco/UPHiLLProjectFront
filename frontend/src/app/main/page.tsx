@@ -108,7 +108,7 @@ function Maps() {
             apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_MAP_KEY || "", // 본인 Google Maps API KEY를 입력
             version: "weekly",
         });
-
+        
         const load = await loader.load();
         const googleMap = new load.maps.Map(
             document.getElementById("map") as HTMLElement,
@@ -118,14 +118,28 @@ function Maps() {
                 zoom: initialZoom,
                 disableDefaultUI: true,
             })
-        setMap(googleMap)
-        mapRef.current = googleMap;
-    };
-
-    // 아바타 이미지 배열
-    // const animateAvatar = () => {
-        // const avatarImages = {
-        //     front: "/skyHatFront.png",
+            setMap(googleMap)
+            mapRef.current = googleMap;
+        };
+        
+        useEffect(() => {
+            window.onmessage = (e: MessageEvent<MessageData>) => {
+                const { lat, lng } = e.data;
+                if (lat && lng && map) {
+                    map.setCenter({ lat, lng });
+                    setLat(lat);
+                    setLng(lng);
+                }
+            };
+            // getPosition();
+            initMap()
+            setInitialLat(lat);  // 처음 위치 저장
+            setInitialLng(lng);  // 처음 위치 저장
+        }, [])
+        // 아바타 이미지 배열
+        // const animateAvatar = () => {
+            // const avatarImages = {
+                //     front: "/skyHatFront.png",
         //     left: ["/skyHatFrontLeft.png", "/skyHatFrontRight.png"],
         //     right: ["/skyHatFrontRight.png", "/skyHatFrontLeft.png"],
         // };
@@ -166,20 +180,6 @@ function Maps() {
     //     return () => cancelAnimationFrame(animationFrameId); // 컴포넌트 언마운트 시 애니메이션 중지
     // }, [lat, lng]);
 
-    useEffect(() => {
-        window.onmessage = (e: MessageEvent<MessageData>) => {
-            const { lat, lng } = e.data;
-            if (lat && lng && map) {
-                map.setCenter({ lat, lng });
-                setLat(lat);
-                setLng(lng);
-            }
-        };
-        // getPosition();
-        initMap()
-        setInitialLat(lat);  // 처음 위치 저장
-        setInitialLng(lng);  // 처음 위치 저장
-    }, [])
 
     useEffect(() => {
         // 고도 정보 가져오기
