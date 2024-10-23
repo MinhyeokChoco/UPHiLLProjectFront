@@ -87,28 +87,28 @@ function Maps() {
     }
 
     // GPS 위치 가져오깅
-    const getPosition = () => {
-        navigator.geolocation.watchPosition(position => {
-            const { latitude, longitude } = position.coords;
-            setLat(latitude);
-            setLng(longitude);
+    // const getPosition = () => {
+    //     navigator.geolocation.watchPosition(position => {
+    //         const { latitude, longitude } = position.coords;
+    //         setLat(latitude);
+    //         setLng(longitude);
 
-            // 지도 초기화 후 첫 위치 설정 시에만 지도 중심 설정
-            // 초기 위치 설정과 지도 중심 설정을 분리하여 더 효율적이고 깔끔하게 위치 변경과 고도 데이터를 처리
-            if (map && initialLat === 0 && initialLng === 0) {
-                setInitialLat(latitude);
-                setInitialLng(longitude);
-                map.setCenter({ lat: latitude, lng: longitude });
-            }
-        })
-    }
+    //         // 지도 초기화 후 첫 위치 설정 시에만 지도 중심 설정
+    //         // 초기 위치 설정과 지도 중심 설정을 분리하여 더 효율적이고 깔끔하게 위치 변경과 고도 데이터를 처리
+    //         if (map && initialLat === 0 && initialLng === 0) {
+    //             setInitialLat(latitude);
+    //             setInitialLng(longitude);
+    //             map.setCenter({ lat: latitude, lng: longitude });
+    //         }
+    //     })
+    // }
 
     const initMap = async () => {
         const loader = new Loader({
             apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_MAP_KEY || "", // 본인 Google Maps API KEY를 입력
             version: "weekly",
         });
-
+        
         const load = await loader.load();
         const googleMap = new load.maps.Map(
             document.getElementById("map") as HTMLElement,
@@ -118,27 +118,41 @@ function Maps() {
                 zoom: initialZoom,
                 disableDefaultUI: true,
             })
-        setMap(googleMap)
-        mapRef.current = googleMap;
-    };
-
-    // 아바타 이미지 배열
-    const animateAvatar = () => {
-        const avatarImages = {
-            front: "/skyHatFront.png",
-            left: ["/skyHatFrontLeft.png", "/skyHatFrontRight.png"],
-            right: ["/skyHatFrontRight.png", "/skyHatFrontLeft.png"],
+            setMap(googleMap)
+            mapRef.current = googleMap;
         };
+        
+        useEffect(() => {
+            window.onmessage = (e: MessageEvent<MessageData>) => {
+                const { lat, lng } = e.data;
+                if (lat && lng && map) {
+                    map.setCenter({ lat, lng });
+                    setLat(lat);
+                    setLng(lng);
+                }
+            };
+            // getPosition();
+            initMap()
+            setInitialLat(lat);  // 처음 위치 저장
+            setInitialLng(lng);  // 처음 위치 저장
+        }, [])
+        // 아바타 이미지 배열
+        // const animateAvatar = () => {
+            // const avatarImages = {
+                //     front: "/skyHatFront.png",
+        //     left: ["/skyHatFrontLeft.png", "/skyHatFrontRight.png"],
+        //     right: ["/skyHatFrontRight.png", "/skyHatFrontLeft.png"],
+        // };
 
-        const animationCycle = () => {
-            if (isMoving) {
-                const currentImage = avatarImages.left[Math.floor(Math.random() * avatarImages.left.length)];
-                setAvatarImage(currentImage);
-            }
-            animationFrameId = requestAnimationFrame(animationCycle);
-        };
-        animationCycle();
-    }
+        // const animationCycle = () => {
+        //     if (isMoving) {
+        //         const currentImage = avatarImages.left[Math.floor(Math.random() * avatarImages.left.length)];
+        //         setAvatarImage(currentImage);
+        //     }
+        //     animationFrameId = requestAnimationFrame(animationCycle);
+        // };
+        // animationCycle();
+    // }
 
     const setPosition = () => {
         if (map !== null) {
@@ -150,36 +164,22 @@ function Maps() {
         }
     }
 
-    useEffect(() => {
-        // 사용자의 움직임 감지 캐릭터 움직임
-        const detectMovement = () => {
-            if (lat !== initialLat || lng !== initialLng) {
-                setIsMoving(true); // 캐릭터가 움직이는 상태로 변경
-                animateAvatar(); // 아바타 에니메이션 함수 실행
-            } else {
-                setIsMoving(false); // 캐릭터가 멈춰있는 상태로 변경
-                setAvatarImage(avatarImage); // 정면 이미지로 설정
-            }
-        };
+    // useEffect(() => {
+    //     // 사용자의 움직임 감지 캐릭터 움직임
+    //     const detectMovement = () => {
+    //         if (lat !== initialLat || lng !== initialLng) {
+    //             setIsMoving(true); // 캐릭터가 움직이는 상태로 변경
+    //             // animateAvatar(); // 아바타 에니메이션 함수 실행
+    //         } else {
+    //             setIsMoving(false); // 캐릭터가 멈춰있는 상태로 변경
+    //             setAvatarImage(avatarImage); // 정면 이미지로 설정
+    //         }
+    //     };
 
-        detectMovement();
-        return () => cancelAnimationFrame(animationFrameId); // 컴포넌트 언마운트 시 애니메이션 중지
-    }, [lat, lng]);
+    //     detectMovement();
+    //     return () => cancelAnimationFrame(animationFrameId); // 컴포넌트 언마운트 시 애니메이션 중지
+    // }, [lat, lng]);
 
-    useEffect(() => {
-        window.onmessage = (e: MessageEvent<MessageData>) => {
-            const { lat, lng } = e.data;
-            if (lat && lng && map) {
-                map.setCenter({ lat, lng });
-                setLat(lat);
-                setLng(lng);
-            }
-        };
-        getPosition();
-        initMap()
-        setInitialLat(lat);  // 처음 위치 저장
-        setInitialLng(lng);  // 처음 위치 저장
-    }, [])
 
     useEffect(() => {
         // 고도 정보 가져오기
@@ -192,6 +192,7 @@ function Maps() {
                     });
 
                     if (response.status === 200) {
+                        console.log(response)
                         const newHigh = response.data.results[0].elevation;
                         setHigh(newHigh);
 
@@ -223,57 +224,42 @@ function Maps() {
         }
     }, [lat, lng])
 
-    // useEffect(() => {
-    //     // 포인트 적립 로직
-    //     if (high >= prevHigh + 20) {
-    //         const pointsToAdd = Math.floor((high - prevHigh) / 20) * 10; // 20m마다 10포인트
-    //         setPoints(prevPoints => prevPoints + pointsToAdd);
-    //         setPrevHigh(high); // 현재 고도를 이전 고도로 업데이트
-    //     }
-    // }, [lat, lng, high, prevHigh]); // lat, lng, high, prevHigh가 변경될 때마다 실행
-
-
-
     useEffect(() => {
         // 포인트 적립 로직
         if (high >= prevHigh + 20) {
             const pointsToAdd = Math.floor((high - prevHigh) / 20) * 10; // 20m마다 10포인트
             setPoints(prevPoints => {
-                const updatedPoints = prevPoints + pointsToAdd
-                async () => {
-                    await customAxios.post("user/pointStack", pointsToAdd)
-                }
-                return updatedPoints;
+                const updatedPoints = prevPoints + pointsToAdd;
+                // 포인트를 서버에 저장하는 API 호출
+                // async/await를 사용하여 서버 요청
+                const updatePoints = async () => {
+                    try {
+                        await customAxios.post("/user/pointStack", { points: pointsToAdd });
+                    } catch (error) {
+                        console.error("포인트 저장 중 오류 발생:", error);
+                    }
+                };
+                updatePoints(); // 서버 요청 호출
+                return updatedPoints; // 업데이트된 포인트 반환
             });
             setPrevHigh(high); // 현재 고도를 이전 고도로 업데이트
         }
-    }, [lat, lng, high, prevHigh]); // lat, lng, high, prevHigh가 변경될 때마다 실행
-
-
-
+    }, [high, prevHigh]); // lat, lng, high, prevHigh가 변경될 때마다 실행
 
     // useEffect(() => {
     //     // 포인트 적립 로직
     //     if (high >= prevHigh + 20) {
     //         const pointsToAdd = Math.floor((high - prevHigh) / 20) * 10; // 20m마다 10포인트
-    //         setPoints(prevPoints => prevPoints + pointsToAdd); // 포인트 업데이트
-    //         setPrevHigh(high); // 현재 고도를 이전 고도로 업데이트
-    
-    //         // 서버에 포인트 적립 요청
-    //         const updatePoints = async () => {
-    //             try {
-    //                 await customAxios.post("user/pointStack", { points: pointsToAdd });
-    //             } catch (error) {
-    //                 console.error("포인트 적립 요청 중 오류 발생:", error);
+    //         setPoints(prevPoints => {
+    //             const updatedPoints = prevPoints + pointsToAdd
+    //             async () => {
+    //                 await customAxios.post("user/pointStack", pointsToAdd)
     //             }
-    //         };
-    
-    //         updatePoints();
+    //             return updatedPoints;
+    //         });
+    //         setPrevHigh(high); // 현재 고도를 이전 고도로 업데이트
     //     }
-    // }, [lat, lng, high, prevHigh]);
-    
-
-
+    // }, [lat, lng, high, prevHigh]); // lat, lng, high, prevHigh가 변경될 때마다 실행
 
     // 맵 드래그할때 현재위치로 돌아가는버튼 보이게하기
     useEffect(() => {
@@ -295,7 +281,6 @@ function Maps() {
         }
     };
 
-
     return (
         <>
             <div style={{ position: "relative", width: '100vw', height: '100vh' }}>
@@ -305,7 +290,7 @@ function Maps() {
 
                 {/* showReturnButton이 true일 때만 버튼 표시 */}
                 {showReturnButton && <Goback onClick={recenterMap} />}
-                {map && <Avata lat={lat} lng={lng} map={map} />}
+                {map && <Avata lat={lat} lng={lng} map={map}/>}
 
                 <FootPoinNickAlt elevation={high} nickname={user.nickName||'Loading...'} points={points} />
             </div>
